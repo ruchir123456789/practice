@@ -1,22 +1,43 @@
+import express from "express";
 import { WebSocketServer } from "ws";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const wss = new WebSocketServer({ port: 3000 });
+// For __dirname in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 3000;
+
+// Set EJS template engine
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
+
+// Render index.ejs
+app.get("/", (req, res) => {
+  res.render("index");
+});
+
+// Start HTTP server
+const server = app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+// WebSocket server
+const wss = new WebSocketServer({ server });
 
 wss.on("connection", (ws) => {
-  console.log("Client connected");
-
-  ws.on("message", (message) => {
+  ws.on("message", (data) => {
+    // Broadcast to all clients
     wss.clients.forEach((client) => {
       if (client.readyState === ws.OPEN) {
-        client.send(message.toString());
+        client.send(data.toString());
       }
     });
   });
-
-  ws.on("close", () => {
-    console.log("Client disconnected");
-  });
 });
-http://www.google.com
-console.log("WebSocket server running on http://localhost:3000");
 
